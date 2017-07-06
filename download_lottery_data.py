@@ -19,7 +19,6 @@ class REQUEST:
         try:
             content = urlopen(request).read()
             output = json.loads(content)
-            print(issueno + ' readed.')
         except urllib.error.HTTPError:
             print('Unable to access to ' + issueno)
             output = {}
@@ -62,7 +61,7 @@ class REQUEST:
 
 
 def download_gx_kuai3():
-    start = datetime.datetime(2017,4,19)
+    start = datetime.datetime(2017,4,18)
     end = datetime.datetime.today()
     dates = [start + datetime.timedelta(days=x) for x in range((end-start).days)]
     caipiaoid = '78'
@@ -72,6 +71,7 @@ def download_gx_kuai3():
         fp = csv.writer(file)
         fp.writerow(['IssueNo', 'Number'])
 
+        output = []
         for i in range(len(dates)):
             for j in range(1,79):
                 if j < 10:
@@ -79,10 +79,11 @@ def download_gx_kuai3():
                 else:
                     issueno = dates[i].strftime('%Y%m%d') + '0' + str(j)
 
+                result = data_request.live_data(caipiaoid, issueno)
+                if result:
+                    output.append(result['result'])
 
-                output = data_request.live_data(caipiaoid, issueno)
-                if output:
-                    REQUEST.save_data(output, fp)
+        REQUEST.save_data(output, fp)
 
 
 def download_yi_kuai3():
@@ -108,18 +109,6 @@ def download_yi_kuai3():
                     REQUEST.save_data(output['result'], fp)
 
 
-def main():
-
-    caipiaoid = '78'
-    issueno = '20170704001'
-    data_request = REQUEST()
-    #output = data_request.caipiao_class()
-    output = data_request.live_data(caipiaoid, issueno)
-    #REQUEST.save_data(output['result'], 'anhui_kuai3.json')
-    if output:
-        pprint(output)
-
-
 def convert2csv(json_file, csv_file):
     with open(json_file) as fp:
         data = json.load(fp)
@@ -129,6 +118,21 @@ def convert2csv(json_file, csv_file):
         cf.writerow(["IssueNo", "number"])
         for item in data:
             cf.writerow([item['issueno'], item['number'][0], item['number'][2], item['number'][4]])
+
+
+def main():
+    '''
+    caipiaoid = '78'
+    issueno = '20170704078'
+    data_request = REQUEST()
+    #output = data_request.caipiao_class()
+    output = data_request.live_data(caipiaoid, issueno)
+    #REQUEST.save_data(output['result'], 'anhui_kuai3.json')
+    if output:
+        pprint(output)
+    '''
+    download_gx_kuai3()
+
 
 
 if __name__ == '__main__':
