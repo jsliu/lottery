@@ -55,16 +55,23 @@ class REQUEST:
             pprint(output)
 
 
-def download_historical_data(caipiaoid, number, output_name, formats='%Y%m%d'):
-    start = datetime.datetime(2017,4,18)
+def download_data(file_name, max_number, formats='%Y%m%d'):
+    start = datetime.datetime(2017,7,4)
     end = datetime.datetime.today()
     dates = [start + datetime.timedelta(days=x) for x in range((end-start).days)]
 
+    options = {'ahk3.json': 76,
+               'gxk3.json': 78,
+               'shk3.json': 105}
+
     data_request = REQUEST()
-    with open(output_name, 'w') as fp:
-        output = []
+    with open(file_name, 'r') as fp:
+        output = json.load(fp)
+
+    with open(file_name, 'w') as fp:
+        caipiaoid = options[file_name]
         for i in range(len(dates)):
-            for j in range(number):
+            for j in range(max_number):
                 if j < 9:
                     issueno = dates[i].strftime(formats) + '00' + str(j+1)
                 else:
@@ -76,6 +83,7 @@ def download_historical_data(caipiaoid, number, output_name, formats='%Y%m%d'):
         json.dump(output, fp)
 
 
+'''
 def download_live_data(file_name, number, formats='%Y%m%d'):
     with open(file_name, 'r') as fp:
         data = json.load(fp)
@@ -98,6 +106,8 @@ def download_live_data(file_name, number, formats='%Y%m%d'):
 
     with open(file_name,'w') as fp:
         json.dump(data, fp)
+'''
+
 
 def convert2csv(json_file, csv_file):
     with open(json_file) as fp:
@@ -121,7 +131,9 @@ def main():
     if output:
         pprint(output)
     '''
-    download_live_data('gxk3.json', 78)
+    #download_live_data('gxk3.json', 78)
+    download_data(87, 73, 'yik3.json','%y%m%d')
+
 
 if __name__ == '__main__':
     main()
