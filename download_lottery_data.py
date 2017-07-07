@@ -11,7 +11,7 @@ class REQUEST:
 
     def live_data(self, caipiaoid, issueno):
         path = '/caipiao/query'
-        querys = 'caipiaoid=' + caipiaoid + '&issueno=' + issueno
+        querys = 'caipiaoid={0}&issueno={1}'.format(caipiaoid, issueno)
 
         url = self.host + path + '?' + querys
         request = Request(url, method='GET')
@@ -49,65 +49,55 @@ class REQUEST:
         return output
 
     @staticmethod
-    def save_data(data, fp):
-        if data:
-            fp.writerow([data['issueno'], data['number']])
-
-    @staticmethod
     def print_data(file_name):
         with open(file_name, 'r') as fp:
             output = json.load(fp)
             pprint(output)
 
 
-def download_gx_kuai3():
+def download_historical_data(caipiaoid, number, output_name, formats='%Y%m%d'):
     start = datetime.datetime(2017,4,18)
     end = datetime.datetime.today()
     dates = [start + datetime.timedelta(days=x) for x in range((end-start).days)]
-    caipiaoid = '78'
 
     data_request = REQUEST()
-    with open('gx_kuai3.csv', 'w') as file:
-        fp = csv.writer(file)
-        fp.writerow(['IssueNo', 'Number'])
-
+    with open(output_name, 'w') as fp:
         output = []
         for i in range(len(dates)):
-            for j in range(1,79):
-                if j < 10:
-                    issueno = dates[i].strftime('%Y%m%d') + '00' + str(j)
-                else:
-                    issueno = dates[i].strftime('%Y%m%d') + '0' + str(j)
-
-                result = data_request.live_data(caipiaoid, issueno)
-                if result:
-                    output.append(result['result'])
-
-        REQUEST.save_data(output, fp)
-
-
-def download_yi_kuai3():
-    start = datetime.datetime(2017, 4, 18)
-    end = datetime.datetime.today()
-    dates = [start + datetime.timedelta(days=x) for x in range((end - start).days)]
-    caipiaoid = '87'
-
-    data_request = REQUEST()
-    with open('yi_kuai3.csv', 'w') as file:
-        fp = csv.writer(file)
-        fp.writerow(['IssueNo', 'Number'])
-
-        for i in range(len(dates)):
-            for j in range(73):
+            for j in range(number):
                 if j < 9:
-                    issueno = dates[i].strftime('%y%m%d') + '00' + str(j+1)
+                    issueno = dates[i].strftime(formats) + '00' + str(j+1)
                 else:
-                    issueno = dates[i].strftime('%y%m%d') + '0' + str(j+1)
+                    issueno = dates[i].strftime(formats) + '0' + str(j+1)
 
-                output = data_request.live_data(caipiaoid, issueno)
-                if output:
-                    REQUEST.save_data(output['result'], fp)
+                response = data_request.live_data(caipiaoid, issueno)
+                if response:
+                    output.append(response['result'])
+        json.dump(output, fp)
 
+
+def download_live_data(file_name, number, formats='%Y%m%d'):
+    with open(file_name, 'r') as fp:
+        data = json.load(fp)
+
+    options = {'ahk3.json': 76,
+               'gxk3.json': 78,
+               'shk3.json': 105}
+
+    caipiaoid = options[file_name]
+    date = datetime.datetime.today()
+    for j in range(number):
+        if j < 9:
+            issueno = date.strftime(formats) + '00' + str(j + 1)
+        else:
+            issueno = date.strftime(formats) + '0' + str(j + 1)
+        data_request = REQUEST()
+        response = data_request.live_data(caipiaoid, issueno)
+        if response:
+            data.append(response['result'])
+
+    with open(file_name,'w') as fp:
+        json.dump(data, fp)
 
 def convert2csv(json_file, csv_file):
     with open(json_file) as fp:
@@ -131,9 +121,7 @@ def main():
     if output:
         pprint(output)
     '''
-    download_gx_kuai3()
-
-
+    download_live_data('gxk3.json', 78)
 
 if __name__ == '__main__':
     main()
