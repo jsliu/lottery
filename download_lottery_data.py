@@ -19,9 +19,10 @@ class REQUEST:
         try:
             content = urlopen(request).read()
             output = json.loads(content)
+            print('Downloaded ' + issueno)
         except urllib.error.HTTPError:
-            print('Unable to access to ' + issueno)
             output = {}
+            print('Unable to access to ' + issueno)
 
         return output
 
@@ -55,18 +56,21 @@ class REQUEST:
             pprint(output)
 
 
-def download_data(file_name, max_number, formats='%Y%m%d'):
-    start = datetime.datetime(2017,7,4)
-    end = datetime.datetime.today()
-    dates = [start + datetime.timedelta(days=x) for x in range((end-start).days)]
+def download_data(file_name, max_number, formats='%Y%m%d', start = datetime.datetime.now().date()):
+    end = datetime.datetime.now().date()
+    dates = [start + datetime.timedelta(days=x) for x in range((end-start).days+1)]
 
     options = {'ahk3.json': 76,
                'gxk3.json': 78,
+               'yik3.json': 87,
                'shk3.json': 105}
 
     data_request = REQUEST()
     with open(file_name, 'r') as fp:
-        output = json.load(fp)
+        try:
+            output = json.load(fp)
+        except json.decoder.JSONDecodeError:
+            output = []
 
     with open(file_name, 'w') as fp:
         caipiaoid = options[file_name]
@@ -76,7 +80,6 @@ def download_data(file_name, max_number, formats='%Y%m%d'):
                     issueno = dates[i].strftime(formats) + '00' + str(j+1)
                 else:
                     issueno = dates[i].strftime(formats) + '0' + str(j+1)
-
                 response = data_request.live_data(caipiaoid, issueno)
                 if response:
                     output.append(response['result'])
@@ -131,8 +134,8 @@ def main():
     if output:
         pprint(output)
     '''
-    #download_live_data('gxk3.json', 78)
-    download_data(87, 73, 'yik3.json','%y%m%d')
+    download_data('gxk3.json', 78)
+    download_data('yik3.json', 73, '%y%m%d')
 
 
 if __name__ == '__main__':
